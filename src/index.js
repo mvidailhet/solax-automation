@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { fetchRealtimeData } from './solaxClient.js';
 import { toEnergyReading } from './energyReading.js';
+import { createAccessTokenCache } from './accessTokenCache.js';
 
 const DEFAULT_POLL_INTERVAL_MS = 60000;
 
@@ -20,8 +21,9 @@ function formatReading(reading) {
   );
 }
 
-async function pollOnce(deviceSn, token) {
+async function pollOnce(deviceSn, accessTokenCache) {
   try {
+    const token = await accessTokenCache.getAccessToken();
     const rawDeviceRecord = await fetchRealtimeData(deviceSn, { token });
     const reading = toEnergyReading(rawDeviceRecord);
     console.log(formatReading(reading));
@@ -32,15 +34,18 @@ async function pollOnce(deviceSn, token) {
 
 function main() {
   const deviceSn = requireEnv('SOLAX_DEVICE_SN');
-  const token = requireEnv('SOLAX_API_TOKEN');
+  const clientId = requireEnv('SOLAX_CLIENT_ID');
+  const clientSecret = requireEnv('SOLAX_CLIENT_SECRET');
   const configuredIntervalMs = Number(process.env.SOLAX_POLL_INTERVAL_MS);
   const pollIntervalMs =
     Number.isFinite(configuredIntervalMs) && configuredIntervalMs > 0
       ? configuredIntervalMs
       : DEFAULT_POLL_INTERVAL_MS;
 
-  pollOnce(deviceSn, token);
-  setInterval(() => pollOnce(deviceSn, token), pollIntervalMs);
+  const accessTokenCache = createAccessTokenCache({ clientId, clientSecret });
+
+  pollOnce(deviceSn, accessTokenCache);
+  setInterval(() => pollOnce(deviceSn, accessTokenCache), pollIntervalMs);
 }
 
 main();
