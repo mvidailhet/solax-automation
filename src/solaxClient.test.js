@@ -25,6 +25,16 @@ test('fetchRealtimeData throws using the API message when code is not 10000', as
   );
 });
 
+test('fetchRealtimeData throws a device-specific error when the API returns no result rows', async () => {
+  const fakeResponse = { code: 10000, result: [] };
+  const fetchImpl = async () => ({ json: async () => fakeResponse });
+
+  await assert.rejects(
+    () => fetchRealtimeData('WRONG-SN', { token: 'test-token', fetchImpl }),
+    /WRONG-SN/
+  );
+});
+
 test('fetchRealtimeData sends the bearer token and device serial in the request', async () => {
   let capturedUrl;
   let capturedOptions;

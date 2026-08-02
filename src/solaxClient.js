@@ -21,5 +21,9 @@ export async function fetchRealtimeData(
     throw new Error(body.message ?? `SolaX API error (code ${body.code})`);
   }
 
-  return body.result[0];
+  const [deviceRecord] = body.result ?? [];
+  if (!deviceRecord) {
+    throw new Error(`SolaX API returned no device data for ${deviceSn}`);
+  }
+  return deviceRecord;
 }

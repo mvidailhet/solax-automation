@@ -33,7 +33,11 @@ async function pollOnce(deviceSn, token) {
 function main() {
   const deviceSn = requireEnv('SOLAX_DEVICE_SN');
   const token = requireEnv('SOLAX_API_TOKEN');
-  const pollIntervalMs = Number(process.env.SOLAX_POLL_INTERVAL_MS ?? DEFAULT_POLL_INTERVAL_MS);
+  const configuredIntervalMs = Number(process.env.SOLAX_POLL_INTERVAL_MS);
+  const pollIntervalMs =
+    Number.isFinite(configuredIntervalMs) && configuredIntervalMs > 0
+      ? configuredIntervalMs
+      : DEFAULT_POLL_INTERVAL_MS;
 
   pollOnce(deviceSn, token);
   setInterval(() => pollOnce(deviceSn, token), pollIntervalMs);
