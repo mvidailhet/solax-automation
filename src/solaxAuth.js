@@ -28,8 +28,15 @@ export async function fetchAccessToken({
     );
   }
 
-  return {
-    accessToken: responseBody.result.access_token,
-    expiresInSeconds: responseBody.result.expires_in,
-  };
+  const accessToken = responseBody.result?.access_token;
+  const expiresInSeconds = responseBody.result?.expires_in;
+
+  if (typeof accessToken !== 'string' || accessToken.length === 0) {
+    throw new Error('SolaX auth response is missing a valid access_token');
+  }
+  if (!Number.isFinite(expiresInSeconds) || expiresInSeconds <= 0) {
+    throw new Error('SolaX auth response is missing a valid expires_in');
+  }
+
+  return { accessToken, expiresInSeconds };
 }

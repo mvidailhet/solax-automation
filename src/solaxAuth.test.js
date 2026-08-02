@@ -72,3 +72,88 @@ test('fetchAccessToken sends a form-encoded client_credentials request', async (
   assert.equal(body.get('client_secret'), 'my-client-secret');
   assert.equal(body.get('grant_type'), 'client_credentials');
 });
+
+test('fetchAccessToken throws a clear error when expires_in is missing', async () => {
+  const fakeResponse = {
+    code: 0,
+    result: { access_token: 'abc123token' },
+  };
+  const fetchImpl = async () => ({ json: async () => fakeResponse });
+
+  await assert.rejects(
+    () =>
+      fetchAccessToken({
+        clientId: 'test-client-id',
+        clientSecret: 'test-client-secret',
+        fetchImpl,
+      }),
+    /expires_in/
+  );
+});
+
+test('fetchAccessToken throws a clear error when expires_in is not numeric', async () => {
+  const fakeResponse = {
+    code: 0,
+    result: { access_token: 'abc123token', expires_in: 'soon' },
+  };
+  const fetchImpl = async () => ({ json: async () => fakeResponse });
+
+  await assert.rejects(
+    () =>
+      fetchAccessToken({
+        clientId: 'test-client-id',
+        clientSecret: 'test-client-secret',
+        fetchImpl,
+      }),
+    /expires_in/
+  );
+});
+
+test('fetchAccessToken throws a clear error when access_token is missing', async () => {
+  const fakeResponse = {
+    code: 0,
+    result: { expires_in: 2591999 },
+  };
+  const fetchImpl = async () => ({ json: async () => fakeResponse });
+
+  await assert.rejects(
+    () =>
+      fetchAccessToken({
+        clientId: 'test-client-id',
+        clientSecret: 'test-client-secret',
+        fetchImpl,
+      }),
+    /access_token/
+  );
+});
+
+test('fetchAccessToken throws a clear error when access_token is empty', async () => {
+  const fakeResponse = {
+    code: 0,
+    result: { access_token: '', expires_in: 2591999 },
+  };
+  const fetchImpl = async () => ({ json: async () => fakeResponse });
+
+  await assert.rejects(
+    () =>
+      fetchAccessToken({
+        clientId: 'test-client-id',
+        clientSecret: 'test-client-secret',
+        fetchImpl,
+      }),
+    /access_token/
+  );
+});
+
+test('fetchAccessToken throws a clear error when result is missing entirely', async () => {
+  const fakeResponse = { code: 0 };
+  const fetchImpl = async () => ({ json: async () => fakeResponse });
+
+  await assert.rejects(() =>
+    fetchAccessToken({
+      clientId: 'test-client-id',
+      clientSecret: 'test-client-secret',
+      fetchImpl,
+    })
+  );
+});
